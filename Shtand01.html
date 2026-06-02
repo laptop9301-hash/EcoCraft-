@@ -1,0 +1,240 @@
+```html
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8">
+<title>ЕкоКрафт Натурал</title>
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+}
+</style>
+</head>
+<body>
+
+<script type="module">
+
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xf0f0f0);
+
+const camera = new THREE.PerspectiveCamera(
+75,
+window.innerWidth/window.innerHeight,
+0.1,
+1000
+);
+
+camera.position.set(0,2,8);
+
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(window.innerWidth,window.innerHeight);
+renderer.shadowMap.enabled = true;
+document.body.appendChild(renderer.domElement);
+
+const loader = new THREE.TextureLoader();
+const clock = new THREE.Clock();
+
+const logo = loader.load("logo.png");
+const face = loader.load("face.jpg");
+
+// Под
+const floor = new THREE.Mesh(
+new THREE.BoxGeometry(20,0.2,20),
+new THREE.MeshStandardMaterial({color:0x777777})
+);
+scene.add(floor);
+
+// Задна стена
+const backWall = new THREE.Mesh(
+new THREE.BoxGeometry(10,4,0.2),
+new THREE.MeshStandardMaterial({color:0x8BC34A})
+);
+backWall.position.set(0,2,-4);
+scene.add(backWall);
+
+// Странична стена
+const sideWall = new THREE.Mesh(
+new THREE.BoxGeometry(0.2,4,6),
+new THREE.MeshStandardMaterial({color:0x689F38})
+);
+sideWall.position.set(5,2,-1);
+scene.add(sideWall);
+
+// Лого
+const logoPlane = new THREE.Mesh(
+new THREE.PlaneGeometry(4,4),
+new THREE.MeshBasicMaterial({
+map:logo,
+transparent:true
+})
+);
+logoPlane.position.set(0,2.2,-3.85);
+scene.add(logoPlane);
+
+// Маса
+const table = new THREE.Mesh(
+new THREE.BoxGeometry(3,1.2,1.2),
+new THREE.MeshStandardMaterial({color:0xffffff})
+);
+table.position.set(0,0.6,-1);
+scene.add(table);
+
+// Сапуни
+const soapColors = [
+0xffc0cb,
+0x90ee90,
+0x87cefa,
+0xffd700,
+0xd8bfd8
+];
+
+for(let i=0;i<5;i++){
+const soap = new THREE.Mesh(
+new THREE.BoxGeometry(0.3,0.15,0.2),
+new THREE.MeshStandardMaterial({
+color:soapColors[i]
+})
+);
+
+soap.position.set(-1+i*0.5,1.3,-1);
+scene.add(soap);
+}
+
+// Свещи
+const candleColors = [
+0xffffff,
+0xffb6c1,
+0xffe4b5,
+0xe6e6fa
+];
+
+for(let i=0;i<4;i++){
+const candle = new THREE.Mesh(
+new THREE.CylinderGeometry(0.08,0.08,0.5,24),
+new THREE.MeshStandardMaterial({
+color:candleColors[i]
+})
+);
+
+candle.position.set(-0.7+i*0.45,1.55,-0.5);
+scene.add(candle);
+}
+
+// Човек
+const body = new THREE.Mesh(
+new THREE.BoxGeometry(0.8,1.6,0.5),
+new THREE.MeshStandardMaterial({
+color:0x222222
+})
+);
+scene.add(body);
+
+const head = new THREE.Mesh(
+new THREE.BoxGeometry(0.6,0.6,0.6),
+new THREE.MeshStandardMaterial({
+map:face
+})
+);
+scene.add(head);
+
+// Осветление
+const ambient = new THREE.AmbientLight(0xffffff,1.5);
+scene.add(ambient);
+
+const light = new THREE.DirectionalLight(0xffffff,2);
+light.position.set(5,10,5);
+scene.add(light);
+
+// Управление
+const keys = {};
+
+document.addEventListener("keydown",(e)=>{
+keys[e.key.toLowerCase()] = true;
+});
+
+document.addEventListener("keyup",(e)=>{
+keys[e.key.toLowerCase()] = false;
+});
+
+let lookAngle = 0;
+
+// Анимация
+function animate(){
+
+requestAnimationFrame(animate);
+
+// Човекът обикаля с нормална скорост
+const t = clock.getElapsedTime() * 0.4;
+
+const radius = 3;
+
+body.position.x = Math.cos(t) * radius;
+body.position.z = Math.sin(t) * radius - 1;
+body.position.y = 0.8;
+
+head.position.x = body.position.x;
+head.position.z = body.position.z;
+head.position.y = 1.9;
+
+body.lookAt(0,0.8,-1);
+head.lookAt(0,1.2,-1);
+
+// Движение като в игра
+const speed = 0.08;
+
+if(keys["w"]){
+camera.position.x -= Math.sin(camera.rotation.y) * speed;
+camera.position.z -= Math.cos(camera.rotation.y) * speed;
+}
+
+if(keys["s"]){
+camera.position.x += Math.sin(camera.rotation.y) * speed;
+camera.position.z += Math.cos(camera.rotation.y) * speed;
+}
+
+if(keys["a"]){
+camera.position.x -= Math.cos(camera.rotation.y) * speed;
+camera.position.z += Math.sin(camera.rotation.y) * speed;
+}
+
+if(keys["d"]){
+camera.position.x += Math.cos(camera.rotation.y) * speed;
+camera.position.z -= Math.sin(camera.rotation.y) * speed;
+}
+
+// Гледане нагоре и надолу
+if(keys["arrowup"]) lookAngle += 0.01;
+if(keys["arrowdown"]) lookAngle -= 0.01;
+
+lookAngle = Math.max(-0.8, Math.min(0.8, lookAngle));
+camera.rotation.x = lookAngle;
+
+// Завъртане
+if(keys["arrowleft"]) camera.rotation.y += 0.02;
+if(keys["arrowright"]) camera.rotation.y -= 0.02;
+
+// Ограничение
+camera.position.x = Math.max(-9, Math.min(9, camera.position.x));
+camera.position.z = Math.max(-9, Math.min(9, camera.position.z));
+
+renderer.render(scene,camera);
+}
+
+animate();
+
+window.addEventListener("resize",()=>{
+
+camera.aspect = window.innerWidth/window.innerHeight;
+camera.updateProjectionMatrix();
+renderer.setSize(window.innerWidth,window.innerHeight);
+
+});
+
+</script>
+
+</body>
+</html>
+```
